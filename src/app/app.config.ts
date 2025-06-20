@@ -1,12 +1,24 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection } from '@angular/core';
-import { provideRouter } from '@angular/router';
-
-import { routes } from './app.routes';
+import {
+  ApplicationConfig,
+  provideBrowserGlobalErrorListeners,
+  provideZonelessChangeDetection,
+} from '@angular/core';
+import { GAME } from './tokens/game';
+import { GAME_MOK } from './tokens/game-mok';
+import { GAME_CONTROL } from './tokens/game-control';
+import { GAME_CONTROL_MOK } from './tokens/game-control-mok';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    provideRouter(routes)
-  ]
+    {
+      provide: GAME,
+      useExisting: GAME_MOK,
+    },
+    {
+      provide: GAME_CONTROL,
+      useExisting: GAME_CONTROL_MOK,
+    },
+  ],
 };
