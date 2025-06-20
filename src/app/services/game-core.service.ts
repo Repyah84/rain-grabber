@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { PlayerControlService } from './player-control.service';
 import { FrameService } from './frame.service';
-import { share, withLatestFrom } from 'rxjs';
+import { sampleTime, share, withLatestFrom } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class GameCore {

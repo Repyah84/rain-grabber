@@ -1,9 +1,22 @@
-<h2>{{title}}</h2>
+<div>
+  <div>{{title}}</div>
 
-<span>{{game()?.timeRemaining}}</span>
+  <span>{{game()?.timeRemaining}}</span>
 
-<div class="game-action">
-  <button (click)="startGame(1)">START GAME</button>
+  <div class="game-action">
+    <button (click)="startGame(20)">START GAME</button>
 
-  <button (click)="stopGame()">STOP GAME</button>
+    <button (click)="stopGame()">STOP GAME</button>
+  </div>
 </div>
+
+<app-scene>
+  <ng-template
+    gamePlayer
+    let-offset="offsetX"
+    let-width="width"
+    let-height="height"
+  >
+    <app-player [offSetX]="offset" [width]="width" [height]="height" />
+  </ng-template>
+</app-scene>
