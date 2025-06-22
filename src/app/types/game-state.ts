@@ -1,3 +1,8 @@
 export interface GameState {
-  readonly offset: number;
+  readonly playerSpeed: number;
+  readonly playerWidth: number;
+  readonly playerHeight: number;
+  readonly fallenItemSpeed: number;
+  readonly fallenItemWidth: number;
+  readonly fallenItemHeight: number;
 }

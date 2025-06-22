@@ -1,8 +1,22 @@
-<div class="falling-section"></div>
+<div style="position: relative" class="falling-section">
+  <span style="position: absolute; top: 0; color: white; font-size: 20px"
+    >{{cath()}}</span
+  >
+
+  @for(item of fallingCore(); track item.id) {
+  <div
+    [gameFallingControl]="item.id"
+    [offsetX]="item.x"
+    [offsetY]="item.y"
+    class="falling"
+  >
+    <ng-container [ngTemplateOutlet]="fallingTemplate()" />
+  </div>
+  }
+</div>
 
 <div class="player-section">
-  <ng-container
-    [ngTemplateOutlet]="player()?.template"
-    [ngTemplateOutletContext]="context()"
-  />
+  <div gamePlayerControl class="player">
+    <ng-container [ngTemplateOutlet]="playerTemplate()" />
+  </div>
 </div>

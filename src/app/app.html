@@ -4,19 +4,16 @@
   <span>{{game()?.timeRemaining}}</span>
 
   <div class="game-action">
-    <button (click)="startGame(20)">START GAME</button>
+    <button (click)="startGame(60)">START GAME</button>
 
     <button (click)="stopGame()">STOP GAME</button>
   </div>
 </div>
 
-<app-scene>
-  <ng-template
-    gamePlayer
-    let-offset="offsetX"
-    let-width="width"
-    let-height="height"
-  >
-    <app-player [offSetX]="offset" [width]="width" [height]="height" />
-  </ng-template>
-</app-scene>
+<div class="scene-container">
+  <app-scene>
+    <app-falling *gameFallingTemplate />
+
+    <app-player *gamePlayerTemplate />
+  </app-scene>
+</div>

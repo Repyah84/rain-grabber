@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { GameEvents } from '../types/game-events';
 import { Subject } from 'rxjs';
+import { GameEvents } from '../types/game-events';
 
 @Injectable({ providedIn: 'root' })
 export class GameEventsService implements GameEvents {

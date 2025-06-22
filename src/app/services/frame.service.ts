@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { animationFrames, share, switchMap, takeUntil } from 'rxjs';
+import { animationFrames, sampleTime, share, switchMap, takeUntil } from 'rxjs';
 import { GAME_EVENTS } from '../tokens/game-events';
 
 @Injectable({ providedIn: 'root' })

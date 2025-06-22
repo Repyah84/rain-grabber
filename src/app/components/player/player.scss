@@ -1,23 +1,10 @@
 :host {
-  --player-off-set-x: 0%;
-  --player-height: 25px;
-  --player-width: 150px;
-  --player-width-bg-color: rgb(250, 167, 167);
+  --player-bg-color: rgb(65 158 80);
 
   display: block;
 
-  width: 100%;
-
-  translate: clamp(0%, var(--player-off-set-x), 100% - var(--player-width)) 0;
-
-  transition: translate 50ms linear;
-
-  background-color: aqua;
-}
-
-.player {
   width: var(--player-width);
   height: var(--player-height);
 
-  background-color: var(--player-width-bg-color);
+  background-color: var(--player-bg-color);
 }

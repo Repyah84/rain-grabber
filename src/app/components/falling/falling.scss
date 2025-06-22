@@ -1,0 +1,12 @@
+:host {
+  --falling-bg-color: rgb(182, 223, 129);
+
+  display: inline-flex;
+
+  width: var(--falling-width);
+  height: var(--falling-height);
+
+  border-radius: 50%;
+
+  background-color: var(--falling-bg-color);
+}
