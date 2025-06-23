@@ -19,7 +19,7 @@ export class GameCore {
 
   public readonly gameFalling$ = this._gameFalling.fallingItems$.pipe(share());
 
-  public deleteFallingItem(id: number): void {
-    this._gameFalling.deleteFallingItemEvent$.next(id * -1);
+  public toggleFallingItem(value: number): void {
+    this._gameFalling.toggleFallingItem$.next(value);
   }
 }

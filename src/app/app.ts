@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { GAME } from './tokens/game';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { GameData } from './types/game-data';
@@ -8,6 +8,7 @@ import { PlyerTemplateDirective } from './directives/player-template.directive';
 import { Player } from './components/player/player';
 import { Falling } from './components/falling/falling';
 import { FallingTemplateDirective } from './directives/falling-template.directive';
+import { Canva } from './components/canva/canva';
 
 @Component({
   selector: 'app-root',
@@ -19,7 +20,9 @@ import { FallingTemplateDirective } from './directives/falling-template.directiv
     FallingTemplateDirective,
     Player,
     Falling,
+    Canva,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
   public readonly title = 'Rain Grabber';

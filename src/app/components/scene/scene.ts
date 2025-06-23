@@ -1,7 +1,8 @@
 import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
   contentChild,
-  effect,
   inject,
   signal,
   TemplateRef,
@@ -22,7 +23,6 @@ import { FallingTemplateDirective } from '../../directives/falling-template.dire
 
 @Component({
   selector: 'app-scene',
-  imports: [NgTemplateOutlet, PlayerControlDirective, FallingControlDirective],
   templateUrl: './scene.html',
   styleUrl: './scene.scss',
   host: {
@@ -34,8 +34,10 @@ import { FallingTemplateDirective } from '../../directives/falling-template.dire
     '[style.--falling-width.px]': 'gameState().fallenItemWidth',
     '[style.--falling-height.px]': 'gameState().fallenItemHeight',
   },
+  imports: [NgTemplateOutlet, PlayerControlDirective, FallingControlDirective],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Scene {
+export class Scene implements AfterViewInit {
   private readonly _gameCore = inject(GameCore);
   private readonly _gameState = inject(GameStateService);
 
@@ -55,81 +57,95 @@ export class Scene {
     requireSync: true,
   });
 
-  public readonly gameTick = toSignal(this._gameCore.gameTick$, {
-    initialValue: null,
-  });
-
-  public readonly fallingCore = toSignal<FallingItem[] | null>(
-    this._gameCore.gameFalling$,
-    { initialValue: null }
-  );
+  public readonly fallingCore = signal<FallingItem[]>([]);
 
   public readonly cath = signal<number>(0);
 
-  public constructor() {
-    effect(() => {
-      const tick = this.gameTick();
-      const player = this.player();
+  public ngAfterViewInit() {
+    this._gameCore.gameTick$.subscribe({
+      next: (tick) => {
+        const player = this.player();
 
-      if (tick !== null && player !== undefined) {
         const [
-          _timeStep,
+          tickCounter,
           control,
-          { playerSpeed, fallenItemSpeed, playerWidth },
+          { playerSpeed, fallenItemSpeed, playerWidth, fallingItemTick },
         ] = tick;
 
-        let offset = 0;
+        if (player !== undefined) {
+          let offset = 0;
 
-        if (control.ArrowLeft) {
-          offset = -1;
-        }
+          if (control.ArrowLeft) {
+            offset = -1;
+          }
 
-        if (control.ArrowRight) {
-          offset = 1;
-        }
+          if (control.ArrowRight) {
+            offset = 1;
+          }
 
-        if (offset !== 0) {
-          player.offSetX.update((currentOffset): number => {
-            if (
-              (offset === 1 && currentOffset === 100) ||
-              (offset === -1 && currentOffset === 0)
-            ) {
-              return currentOffset;
+          if (offset !== 0) {
+            player.offSetX.update((currentOffset): number => {
+              if (
+                (offset === 1 && currentOffset === 100) ||
+                (offset === -1 && currentOffset === 0)
+              ) {
+                return currentOffset;
+              }
+
+              return currentOffset + offset * playerSpeed;
+            });
+          }
+
+          if (tickCounter % fallingItemTick === 0) {
+            const fallingItem: FallingItem = {
+              id: Math.floor(Math.random() * 1000000),
+              x: -Math.floor(Math.random() * 101),
+              y: -100,
+            };
+
+            this.fallingCore.update((state) => {
+              return [...state, fallingItem];
+            });
+          }
+
+          this.fallingItems().forEach((item, index) => {
+            const playerRect =
+              player.elementRef.nativeElement.getBoundingClientRect();
+
+            const itemRect = item.element.nativeElement.getBoundingClientRect();
+
+            if (index === 0) {
+              console.log(itemRect);
             }
 
-            return currentOffset + offset * playerSpeed;
+            if (
+              playerRect.top - itemRect.bottom < 0 &&
+              itemRect.right - playerRect.left > 0 &&
+              itemRect.right - playerRect.left < playerWidth
+            ) {
+              this.cath.update((state) => state + 1);
+
+              this.fallingCore.update((state) =>
+                state.filter(({ id }) => id !== item.id())
+              );
+
+              return;
+            }
+
+            if (playerRect.top - itemRect.bottom < 0) {
+              this.fallingCore.update((state) =>
+                state.filter(({ id }) => id !== item.id())
+              );
+
+              return;
+            }
+
+            item.offsetYValue.update(
+              (currentOffset) => currentOffset + 1 * fallenItemSpeed
+            );
           });
         }
-
-        this.fallingItems().forEach((item) => {
-          const playerRect =
-            player.elementRef.nativeElement.getBoundingClientRect();
-
-          const itemRect = item.element.nativeElement.getBoundingClientRect();
-
-          if (
-            playerRect.top - itemRect.bottom < 0 &&
-            itemRect.right - playerRect.left > 0 &&
-            itemRect.right - playerRect.left < playerWidth
-          ) {
-            this.cath.update((state) => state + 1);
-
-            this._gameCore.deleteFallingItem(item.id());
-
-            return;
-          }
-
-          if (playerRect.top - itemRect.bottom < 0) {
-            this._gameCore.deleteFallingItem(item.id());
-
-            return;
-          }
-
-          item.offsetYValue.update(
-            (currentOffset) => currentOffset + 1 * fallenItemSpeed
-          );
-        });
-      }
+      },
     });
   }
 }
