@@ -1,9 +1,17 @@
 :host {
+  padding: 16px;
+
   height: 100%;
 
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 30px;
+}
+
+.controls {
+  display: grid;
+
+  gap: 10px;
 }
 
 .game-action {
@@ -13,5 +21,5 @@
 }
 
 .scene-container {
-  padding: 16px;
+  overflow: hidden;
 }

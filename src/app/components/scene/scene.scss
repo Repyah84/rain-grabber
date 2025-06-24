@@ -1,41 +1,16 @@
 :host {
-  overflow: hidden;
-
   height: 100%;
+  width: 100%;
 
   display: grid;
-  grid-template-columns: var(--scene-x-board-start) 1fr var(--scene-x-board-end);
-  grid-template-rows: var(--scene-y-board) 1fr auto;
+}
 
-  border: 1px solid rgb(50, 109, 58);
+.canvas-wrapper {
+  overflow: hidden;
 
   background: rgb(41 51 42);
 }
 
-.falling-section {
-  grid-area: 2/2 / 3/4;
-
-  display: grid;
-}
-
-.player-section {
-  grid-area: 3/1 / 4/3;
-}
-
-.player {
-  translate: var(--player-offset-x) 0;
-
-  transition: translate 50ms linear;
-}
-
-.falling {
-  grid-area: 1/1 / 2/2;
-
-  display: flex;
-  align-items: end;
-  justify-content: end;
-
-  translate: var(--falling-offset-x) var(--falling-offset-y);
-
-  transition: translate 100ms linear;
+.canvas {
+  display: block;
 }

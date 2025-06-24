@@ -1,7 +1,12 @@
-<div>
+<div class="controls">
   <div>{{title}}</div>
 
   <span>{{game()?.timeRemaining}}</span>
+
+  <app-options
+    (inChangeOptions)="optionsChange($event)"
+    [options]="gameState()"
+  ></app-options>
 
   <div class="game-action">
     <button (click)="startGame(60)">START GAME</button>
@@ -11,11 +16,5 @@
 </div>
 
 <div class="scene-container">
-  <!-- <app-scene>
-    <app-falling *gameFallingTemplate />
-
-    <app-player *gamePlayerTemplate />
-  </app-scene> -->
-
-  <app-canva />
+  <app-scene></app-scene>
 </div>

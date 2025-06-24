@@ -1,0 +1,23 @@
+:host {
+  display: grid;
+  gap: 20px;
+}
+
+.options {
+  display: grid;
+  gap: 10px;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.has-error {
+  border-color: red;
+}
+
+.input {
+  width: 100%;
+}

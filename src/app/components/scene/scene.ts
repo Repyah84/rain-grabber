@@ -2,150 +2,310 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
-  contentChild,
+  effect,
+  ElementRef,
   inject,
-  signal,
-  TemplateRef,
   viewChild,
-  viewChildren,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { NgTemplateOutlet } from '@angular/common';
-
-import { PlyerTemplateDirective } from '../../directives/player-template.directive';
+import { debounceTime, fromEvent } from 'rxjs';
 import { GameCore } from '../../services/game-core.service';
-
-import { FallingItem } from '../../types/falling-item';
 import { GameStateService } from '../../services/game-state.service';
-import { PlayerControlDirective } from '../../directives/player-control.directive';
-import { FallingControlDirective } from '../../directives/falling-control.directive';
-import { FallingTemplateDirective } from '../../directives/falling-template.directive';
+import { FallingItem } from './types/falling-item';
+import { GamePlayer } from './types/player';
+import { SceneSize } from './types/scene-size';
+import { toSignal } from '@angular/core/rxjs-interop';
+
+const FALLING_ITEM_COLOR = '#419E50';
+const PLAYER_COLOR = '#B6DF81';
 
 @Component({
   selector: 'app-scene',
   templateUrl: './scene.html',
   styleUrl: './scene.scss',
-  host: {
-    '[style.--scene-x-board-end.px]': 'gameState().playerWidth',
-    '[style.--scene-x-board-start.px]': 'gameState().fallenItemWidth',
-    '[style.--scene-y-board.px]': 'gameState().fallenItemHeight',
-    '[style.--player-height.px]': 'gameState().playerHeight',
-    '[style.--player-width.px]': 'gameState().playerWidth',
-    '[style.--falling-width.px]': 'gameState().fallenItemWidth',
-    '[style.--falling-height.px]': 'gameState().fallenItemHeight',
-  },
-  imports: [NgTemplateOutlet, PlayerControlDirective, FallingControlDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Scene implements AfterViewInit {
   private readonly _gameCore = inject(GameCore);
   private readonly _gameState = inject(GameStateService);
 
-  public readonly playerTemplate = contentChild(PlyerTemplateDirective, {
-    read: TemplateRef,
-  });
+  private readonly _canvasRef =
+    viewChild<ElementRef<HTMLCanvasElement>>('canvas');
 
-  public readonly fallingTemplate = contentChild(FallingTemplateDirective, {
-    read: TemplateRef,
-  });
+  private readonly _canvasWrapperRef =
+    viewChild<ElementRef<HTMLElement>>('canvasWrapper');
 
-  public readonly player = viewChild(PlayerControlDirective);
+  private readonly _fallingItems: FallingItem[] = [];
 
-  public readonly fallingItems = viewChildren(FallingControlDirective);
+  private _ctx?: CanvasRenderingContext2D;
 
-  public readonly gameState = toSignal(this._gameState.state$, {
+  private _player: GamePlayer = {
+    width: 0,
+    height: 0,
+    speed: 0,
+    x: 0,
+    y: 0,
+  };
+
+  private _sceneSize: SceneSize = { height: 0, width: 0 };
+
+  private readonly _widowsResize$ = fromEvent(window, 'resize').pipe(
+    debounceTime(200)
+  );
+
+  private readonly _gameStateSignal = toSignal(this._gameState.state$, {
     requireSync: true,
   });
 
-  public readonly fallingCore = signal<FallingItem[]>([]);
+  private readonly _widowsResizeSignal = toSignal(this._widowsResize$, {
+    initialValue: null,
+  });
 
-  public readonly cath = signal<number>(0);
+  private readonly _tick = toSignal(this._gameCore.gameTick$, {
+    initialValue: null,
+  });
 
-  public ngAfterViewInit() {
-    this._gameCore.gameTick$.subscribe({
-      next: (tick) => {
-        const player = this.player();
+  public constructor() {
+    effect(() => {
+      const gameState = this._gameStateSignal();
 
+      const { playerHeight, playerSpeed, playerWidth } = gameState;
+
+      /**
+       * Update player position after game config change
+       */
+      this._playerUpdate(() => ({
+        height: playerHeight,
+        width: playerWidth,
+        speed: playerSpeed,
+      }));
+    });
+
+    effect(() => {
+      const resize = this._widowsResizeSignal();
+      const canvas = this._canvasRef()?.nativeElement;
+      const canvasWrapper = this._canvasWrapperRef()?.nativeElement;
+
+      if (
+        resize !== null &&
+        canvas !== undefined &&
+        canvasWrapper !== undefined
+      ) {
+        const { width, height } = canvasWrapper.getBoundingClientRect();
+
+        console.log('resize', width, height);
+
+        canvas.width = width;
+        canvas.height = height;
+
+        /**
+         * Update scene size after window resize
+         */
+        this._sceneSize = {
+          height,
+          width,
+        };
+
+        /**
+         * Update player position after window resize
+         */
+        this._playerUpdate((player) => ({
+          x: width / 2 - player.width / 2,
+          y: height - player.height - 10,
+        }));
+
+        /**
+         * Update falling items position after window resize
+         */
+        this._fallingItems.forEach((item) => {
+          item.x = Math.max(
+            0,
+            Math.min(
+              ((width - item.width) * item.xPr) / 100,
+              width - item.width
+            )
+          );
+
+          item.y = (height * item.yPr) / 100;
+        });
+
+        this._draw();
+      }
+    });
+
+    effect(() => {
+      const tick = this._tick();
+
+      if (tick !== null) {
         const [
           tickCounter,
           control,
-          { playerSpeed, fallenItemSpeed, playerWidth, fallingItemTick },
+          {
+            fallenItemSpeed,
+            fallenItemHeight,
+            fallenItemWidth,
+            fallingItemTick,
+          },
         ] = tick;
 
-        if (player !== undefined) {
-          let offset = 0;
+        const sceneSize = this._sceneSize;
+        const player = this._player;
 
-          if (control.ArrowLeft) {
-            offset = -1;
-          }
+        let offset = 0;
 
-          if (control.ArrowRight) {
-            offset = 1;
-          }
+        if (control.ArrowLeft) {
+          offset = 1;
+        }
 
-          if (offset !== 0) {
-            player.offSetX.update((currentOffset): number => {
-              if (
-                (offset === 1 && currentOffset === 100) ||
-                (offset === -1 && currentOffset === 0)
-              ) {
-                return currentOffset;
-              }
+        if (control.ArrowRight) {
+          offset = -1;
+        }
 
-              return currentOffset + offset * playerSpeed;
-            });
-          }
+        /**
+         * Update player position after keyBoard events
+         * ArrowLeft keyBoardDown keyBoardUp
+         * ArrowRight keyBoardDown keyBoardUp
+         */
+        if (offset !== 0) {
+          this._playerUpdate((player) => ({
+            x: Math.max(
+              0,
+              Math.min(
+                player.x - offset * player.speed,
+                sceneSize.width - player.width
+              )
+            ),
+          }));
+        }
 
-          if (tickCounter % fallingItemTick === 0) {
-            const fallingItem: FallingItem = {
-              id: Math.floor(Math.random() * 1000000),
-              x: -Math.floor(Math.random() * 101),
-              y: -100,
-            };
+        /**
+         * Add falling item
+         */
+        if (tickCounter === 1 || tickCounter % fallingItemTick === 0) {
+          const xPr = Math.floor(Math.random() * 101);
 
-            this.fallingCore.update((state) => {
-              return [...state, fallingItem];
-            });
-          }
-
-          this.fallingItems().forEach((item, index) => {
-            const playerRect =
-              player.elementRef.nativeElement.getBoundingClientRect();
-
-            const itemRect = item.element.nativeElement.getBoundingClientRect();
-
-            if (index === 0) {
-              console.log(itemRect);
-            }
-
-            if (
-              playerRect.top - itemRect.bottom < 0 &&
-              itemRect.right - playerRect.left > 0 &&
-              itemRect.right - playerRect.left < playerWidth
-            ) {
-              this.cath.update((state) => state + 1);
-
-              this.fallingCore.update((state) =>
-                state.filter(({ id }) => id !== item.id())
-              );
-
-              return;
-            }
-
-            if (playerRect.top - itemRect.bottom < 0) {
-              this.fallingCore.update((state) =>
-                state.filter(({ id }) => id !== item.id())
-              );
-
-              return;
-            }
-
-            item.offsetYValue.update(
-              (currentOffset) => currentOffset + 1 * fallenItemSpeed
-            );
+          this._fallingItems.push({
+            x: ((sceneSize.width - fallenItemWidth) * xPr) / 100,
+            xPr,
+            y: 0,
+            yPr: 0,
+            width: fallenItemWidth,
+            height: fallenItemHeight,
           });
         }
-      },
+
+        /**
+         * Move falling item
+         */
+        this._fallingItems.forEach((item) => {
+          item.yPr += 0.1 * fallenItemSpeed;
+
+          item.y = (sceneSize.height * item.yPr) / 100;
+        });
+
+        /**
+         * Remove falling item
+         */
+        for (let i = this._fallingItems.length - 1; i >= 0; i--) {
+          const item = this._fallingItems[i];
+
+          const circleX = item.x + item.width / 2;
+          const circleY = item.y + item.height / 2;
+          const radius = item.width / 2;
+
+          const playerCenterX = player.x + player.width / 2;
+          const playerCenterY = player.y + player.height / 2;
+
+          const distX = Math.abs(circleX - playerCenterX);
+          const distY = Math.abs(circleY - playerCenterY);
+
+          const collisionOnX = distX <= player.width / 2 + radius;
+          const collisionOnY = distY <= player.height / 2 + radius;
+
+          const cornerCheck =
+            distX > player.width / 2 &&
+            distY > player.height / 2 &&
+            Math.pow(distX - player.width / 2, 2) +
+              Math.pow(distY - player.height / 2, 2) <=
+              Math.pow(radius, 2);
+
+          const isHit =
+            collisionOnX &&
+            collisionOnY &&
+            (distX <= player.width / 2 ||
+              distY <= player.height / 2 ||
+              cornerCheck);
+
+          const isMissed = item.y - item.height > sceneSize.height;
+
+          if (isHit || isMissed) {
+            this._fallingItems.splice(i, 1);
+          }
+        }
+
+        this._draw();
+      }
     });
+  }
+
+  public ngAfterViewInit(): void {
+    const canvas = this._canvasRef()?.nativeElement;
+    const canvasWrapper = this._canvasWrapperRef()?.nativeElement;
+
+    if (canvas !== undefined && canvasWrapper !== undefined) {
+      this._ctx = canvas.getContext('2d')!;
+
+      const { width, height } = canvasWrapper.getBoundingClientRect();
+
+      canvas.width = width;
+      canvas.height = height;
+
+      /**
+       * Update player position after vew init
+       */
+      this._playerUpdate((player) => ({
+        x: width / 2 - player.width / 2,
+        y: height - player.height - 10,
+      }));
+
+      this._sceneSize = { height, width };
+
+      this._draw();
+    }
+  }
+
+  private _playerUpdate(fn: (value: GamePlayer) => Partial<GamePlayer>): void {
+    const player = this._player;
+
+    this._player = { ...player, ...fn(player) };
+  }
+
+  private _draw(): void {
+    const ctx: CanvasRenderingContext2D | undefined = this._ctx;
+
+    if (ctx !== undefined) {
+      const { width, height } = this._sceneSize;
+
+      const player = this._player;
+
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.fillStyle = FALLING_ITEM_COLOR;
+
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+
+      ctx.fillStyle = PLAYER_COLOR;
+
+      this._fallingItems.forEach((item) => {
+        ctx.beginPath();
+        ctx.arc(
+          item.x + item.width / 2,
+          item.y + item.height / 2,
+          item.width / 2,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+      });
+    }
   }
 }

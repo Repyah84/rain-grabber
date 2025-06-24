@@ -4,24 +4,15 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { GameData } from './types/game-data';
 import { GAME_CONTROL } from './tokens/game-control';
 import { Scene } from './components/scene/scene';
-import { PlyerTemplateDirective } from './directives/player-template.directive';
-import { Player } from './components/player/player';
-import { Falling } from './components/falling/falling';
-import { FallingTemplateDirective } from './directives/falling-template.directive';
-import { Canva } from './components/canva/canva';
+import { Options } from './components/options/options';
+import { GameStateService } from './services/game-state.service';
+import { GameState } from './types/game-state';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',
-  imports: [
-    Scene,
-    PlyerTemplateDirective,
-    FallingTemplateDirective,
-    Player,
-    Falling,
-    Canva,
-  ],
+  imports: [Scene, Options],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
@@ -29,9 +20,14 @@ export class App {
 
   private readonly _game = inject(GAME);
   private readonly _gameControl = inject(GAME_CONTROL);
+  private readonly _gameState = inject(GameStateService);
 
   public readonly game = toSignal<GameData | null>(this._game.data, {
     initialValue: null,
+  });
+
+  public readonly gameState = toSignal<GameState>(this._gameState.state$, {
+    requireSync: true,
   });
 
   public startGame(value: number): void {
@@ -40,5 +36,9 @@ export class App {
 
   public stopGame(): void {
     this._gameControl.stop();
+  }
+
+  public optionsChange(value: GameState): void {
+    this._gameState.update(value);
   }
 }
