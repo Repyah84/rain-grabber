@@ -2,18 +2,18 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
-  effect,
   ElementRef,
   inject,
+  OnDestroy,
+  OnInit,
   viewChild,
 } from '@angular/core';
-import { debounceTime, fromEvent } from 'rxjs';
+import { debounceTime, fromEvent, Subscription } from 'rxjs';
 import { GameCore } from '../../services/game-core.service';
 import { GameStateService } from '../../services/game-state.service';
 import { FallingItem } from './types/falling-item';
 import { GamePlayer } from './types/player';
 import { SceneSize } from './types/scene-size';
-import { toSignal } from '@angular/core/rxjs-interop';
 
 const FALLING_ITEM_COLOR = '#419E50';
 const PLAYER_COLOR = '#B6DF81';
@@ -24,7 +24,7 @@ const PLAYER_COLOR = '#B6DF81';
   styleUrl: './scene.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Scene implements AfterViewInit {
+export class Scene implements OnInit, AfterViewInit, OnDestroy {
   private readonly _gameCore = inject(GameCore);
   private readonly _gameState = inject(GameStateService);
 
@@ -33,6 +33,8 @@ export class Scene implements AfterViewInit {
 
   private readonly _canvasWrapperRef =
     viewChild<ElementRef<HTMLElement>>('canvasWrapper');
+
+  private readonly _subscription = new Subscription();
 
   private readonly _fallingItems: FallingItem[] = [];
 
@@ -52,90 +54,74 @@ export class Scene implements AfterViewInit {
     debounceTime(200)
   );
 
-  private readonly _gameStateSignal = toSignal(this._gameState.state$, {
-    requireSync: true,
-  });
+  public ngOnInit(): void {
+    this._subscription.add(
+      this._gameState.state$.subscribe({
+        next: (gameState) => {
+          const { playerHeight, playerSpeed, playerWidth } = gameState;
 
-  private readonly _widowsResizeSignal = toSignal(this._widowsResize$, {
-    initialValue: null,
-  });
+          /**
+           * Update player position after game config change
+           */
+          this._playerUpdate(() => ({
+            height: playerHeight,
+            width: playerWidth,
+            speed: playerSpeed,
+          }));
+        },
+      })
+    );
 
-  private readonly _tick = toSignal(this._gameCore.gameTick$, {
-    initialValue: null,
-  });
+    this._subscription.add(
+      this._widowsResize$.subscribe(() => {
+        const canvas = this._canvasRef()?.nativeElement;
+        const canvasWrapper = this._canvasWrapperRef()?.nativeElement;
 
-  public constructor() {
-    effect(() => {
-      const gameState = this._gameStateSignal();
+        if (canvas !== undefined && canvasWrapper !== undefined) {
+          const { width, height } = canvasWrapper.getBoundingClientRect();
 
-      const { playerHeight, playerSpeed, playerWidth } = gameState;
+          canvas.width = width;
+          canvas.height = height;
 
-      /**
-       * Update player position after game config change
-       */
-      this._playerUpdate(() => ({
-        height: playerHeight,
-        width: playerWidth,
-        speed: playerSpeed,
-      }));
-    });
+          /**
+           * Update scene size after window resize
+           */
+          this._sceneSize = {
+            height,
+            width,
+          };
 
-    effect(() => {
-      const resize = this._widowsResizeSignal();
-      const canvas = this._canvasRef()?.nativeElement;
-      const canvasWrapper = this._canvasWrapperRef()?.nativeElement;
+          /**
+           * Update player position after window resize
+           */
+          this._playerUpdate((player) => ({
+            x: width / 2 - player.width / 2,
+            y: height - player.height - 10,
+          }));
 
-      if (
-        resize !== null &&
-        canvas !== undefined &&
-        canvasWrapper !== undefined
-      ) {
-        const { width, height } = canvasWrapper.getBoundingClientRect();
+          /**
+           * Update falling items position after window resize
+           */
+          this._fallingItems.forEach((item) => {
+            item.x = Math.max(
+              0,
+              Math.min(
+                ((width - item.width) * item.xPr) / 100,
+                width - item.width
+              )
+            );
 
-        console.log('resize', width, height);
+            item.y = (height * item.yPr) / 100;
+          });
 
-        canvas.width = width;
-        canvas.height = height;
+          this._draw();
+        }
+      })
+    );
 
-        /**
-         * Update scene size after window resize
-         */
-        this._sceneSize = {
-          height,
-          width,
-        };
-
-        /**
-         * Update player position after window resize
-         */
-        this._playerUpdate((player) => ({
-          x: width / 2 - player.width / 2,
-          y: height - player.height - 10,
-        }));
-
-        /**
-         * Update falling items position after window resize
-         */
-        this._fallingItems.forEach((item) => {
-          item.x = Math.max(
-            0,
-            Math.min(
-              ((width - item.width) * item.xPr) / 100,
-              width - item.width
-            )
-          );
-
-          item.y = (height * item.yPr) / 100;
-        });
-
-        this._draw();
-      }
-    });
-
-    effect(() => {
-      const tick = this._tick();
-
-      if (tick !== null) {
+    this._subscription.add();
+    this._gameCore.gameTick$.subscribe({
+      next: (tick) => {
         const [
           tickCounter,
           control,
@@ -243,7 +229,7 @@ export class Scene implements AfterViewInit {
         }
 
         this._draw();
-      }
+      },
     });
   }
 
@@ -307,5 +293,9 @@ export class Scene implements AfterViewInit {
         ctx.fill();
       });
     }
+  }
+
+  public ngOnDestroy(): void {
+    this._subscription.unsubscribe();
   }
 }
