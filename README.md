@@ -53,7 +53,7 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
-### 🎮 How to Play
+## 🎮 How to Play
 
 Use the Left Arrow (←) to move left.
 
@@ -63,7 +63,7 @@ Catch the falling circles with your platform.
 
 You can adjust game settings like speed player speed falling items and falling frequency in the UI.
 
-### 🎨 Technical Details
+## 🎨 Technical Details
 
 The game is rendered using the HTML Canvas element, which provides smooth, efficient 2D graphics.
 
