@@ -8,7 +8,6 @@ import {
   switchMap,
   takeUntil,
   takeWhile,
-  tap,
   timer,
 } from 'rxjs';
 import { GameData } from '../types/game-data';
@@ -26,9 +25,6 @@ export class GameMockService implements Game {
     switchMap((value) =>
       timer(0, 1000).pipe(
         map((n) => value - n),
-        tap((v) => {
-          console.log(v);
-        }),
         takeWhile((n) => n >= 0),
         takeUntil(this._gameEvents.stop$),
         finalize(() => this._gameEvents.stop$.next()),
