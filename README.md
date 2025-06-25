@@ -33,7 +33,13 @@ The game is built using **Angular 20** and the **HTML Canvas API**, providing sm
    npm -v
    ```
 
-### ✅ Step 2: Install Project Dependencies
+### ✅ Step 2: Open the Terminal in the Project Folder
+
+```bash
+cd path/to/project/folder
+```
+
+### ✅ Step 3: Install Project Dependencies
 
 In the terminal, type:
 
@@ -41,7 +47,7 @@ In the terminal, type:
 npm install
 ```
 
-### ✅ Step 3: Start the Development Server
+### ✅ Step 4: Start the Development Server
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.0.3.
 
