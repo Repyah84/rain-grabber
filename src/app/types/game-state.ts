@@ -5,5 +5,6 @@ export interface GameState {
   readonly fallenItemSpeed: number;
   readonly fallenItemWidth: number;
   readonly fallenItemHeight: number;
-  readonly fallingItemTick: number;
+  readonly fallingFrequency: number;
+  readonly gameTime: number;
 }

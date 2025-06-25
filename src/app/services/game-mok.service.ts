@@ -8,12 +8,14 @@ import {
   switchMap,
   takeUntil,
   takeWhile,
+  tap,
   timer,
 } from 'rxjs';
 import { GameData } from '../types/game-data';
 
 import { GAME_STORAGE } from '../tokens/game-storage';
 import { GAME_EVENTS } from '../tokens/game-events';
+import { GameType } from '../types/game-type';
 
 @Injectable({ providedIn: 'root' })
 export class GameMockService implements Game {
@@ -23,7 +25,11 @@ export class GameMockService implements Game {
   private readonly _countdownTimer$ = this._gameEvents.start$.pipe(
     switchMap((value) =>
       timer(0, 1000).pipe(
-        takeWhile((n) => n <= value),
+        map((n) => value - n),
+        tap((v) => {
+          console.log(v);
+        }),
+        takeWhile((n) => n >= 0),
         takeUntil(this._gameEvents.stop$),
         finalize(() => this._gameEvents.stop$.next()),
         share()
@@ -41,6 +47,7 @@ export class GameMockService implements Game {
         gameData = {
           caughtObjects: 0,
           timeRemaining: n,
+          type: GameType.RUN,
         };
 
         this._gameStorage.add(gameData);

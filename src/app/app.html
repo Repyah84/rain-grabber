@@ -1,20 +1,29 @@
+@let settings = gameState();
+<!-- <br> -->
+@let gameDataLet = gameData();
+
 <div class="controls">
-  <div>{{title}}</div>
-
-  <span>{{game()?.timeRemaining}}</span>
-
   <app-options
     (inChangeOptions)="optionsChange($event)"
-    [options]="gameState()"
+    [options]="settings"
   ></app-options>
 
   <div class="game-action">
-    <button (click)="startGame(60)">START GAME</button>
+    <button (click)="startGame(settings.gameTime)">START GAME</button>
 
-    <button (click)="stopGame()">STOP GAME</button>
+    <button
+      [disabled]="gameDataLet === null || gameDataLet.timeRemaining === 0"
+      (click)="handleGame()"
+    >
+      {{gameType() === 'pause' ? 'CONTINUE GAME' : 'STOP GAME'}}
+    </button>
   </div>
 </div>
 
-<div class="scene-container">
-  <app-scene></app-scene>
+<div class="game">
+  <app-game [game]="game()"></app-game>
+
+  <div class="scene-container">
+    <app-scene></app-scene>
+  </div>
 </div>

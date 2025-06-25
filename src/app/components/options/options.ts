@@ -11,9 +11,9 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { GameState } from '../../types/game-state';
 import { OptionsControl } from './types/options-control';
 import { FormControlErrorPipe } from '../../pipes/form-controls-error.pipe';
+import { GameState } from '../../types/game-state';
 
 @Component({
   selector: 'app-options',
@@ -55,9 +55,13 @@ export class Options implements OnInit {
       nonNullable: true,
       validators: [Validators.required, Validators.min(10), Validators.max(50)],
     }),
-    fallingItemTick: new FormControl(0, {
+    fallingFrequency: new FormControl(0, {
       nonNullable: true,
       validators: [Validators.required, Validators.min(1)],
+    }),
+    gameTime: new FormControl(0, {
+      nonNullable: true,
+      validators: [Validators.required, Validators.min(60)],
     }),
   });
 
@@ -66,10 +70,11 @@ export class Options implements OnInit {
       fallenItemHeight,
       fallenItemWidth,
       fallenItemSpeed,
-      fallingItemTick,
+      fallingFrequency: fallingItemTick,
       playerHeight,
       playerSpeed,
       playerWidth,
+      gameTime,
     } = this.options();
 
     this.optionGroup.patchValue(
@@ -77,26 +82,21 @@ export class Options implements OnInit {
         fallenItemHeight,
         fallenItemWidth,
         fallenItemSpeed,
-        fallingItemTick,
+        fallingFrequency: fallingItemTick,
         playerHeight,
         playerSpeed,
         playerWidth,
+        gameTime,
       },
       { emitEvent: false }
     );
 
-    this.optionGroup.valueChanges.subscribe((v) => {
-      console.log(v, this.optionGroup);
+    this.optionGroup.valueChanges.subscribe(() => {
+      if (!this.optionGroup.valid) {
+        return;
+      }
+
+      this.inChangeOptions.emit(this.optionGroup.value as GameState);
     });
-  }
-
-  public onSubmit(event: Event): void {
-    console.log(this.optionGroup, event);
-
-    if (!this.optionGroup.valid) {
-      return;
-    }
-
-    this.inChangeOptions.emit(this.optionGroup.value as GameState);
   }
 }

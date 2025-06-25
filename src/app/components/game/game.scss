@@ -1,0 +1,24 @@
+:host {
+  display: grid;
+  grid-template-columns: 1fr auto;
+
+  padding: 16px;
+
+  background: var(--game-ng-color);
+
+  color: rgb(225, 238, 225);
+
+  font-size: 28px;
+}
+
+.time {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

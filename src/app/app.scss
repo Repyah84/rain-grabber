@@ -20,6 +20,13 @@
   gap: 30px;
 }
 
+.game {
+  overflow: hidden;
+
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
 .scene-container {
   overflow: hidden;
 }

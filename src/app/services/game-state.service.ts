@@ -11,7 +11,8 @@ export class GameStateService {
     fallenItemSpeed: 1,
     fallenItemHeight: 30,
     fallenItemWidth: 30,
-    fallingItemTick: 60,
+    fallingFrequency: 60,
+    gameTime: 180,
   });
 
   public update(value: Partial<GameState>): void {

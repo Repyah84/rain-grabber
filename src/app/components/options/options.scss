@@ -15,7 +15,8 @@
 }
 
 .has-error {
-  border-color: red;
+  border-color: var(--game-warning-color);
+  color: var(--game-warning-color);
 }
 
 .input {

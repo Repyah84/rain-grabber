@@ -1,9 +1,9 @@
-<form [formGroup]="optionGroup" class="options" (ngSubmit)="onSubmit($event)">
+<form class="options" [formGroup]="optionGroup">
   <div class="content">
     <label>
       @let playerSpeedControl = optionGroup.controls.playerSpeed;
 
-      <span
+      <span [class.has-error]="playerSpeedControl.errors !== null"
         >{{playerSpeedControl.errors | fromControlError: 'Player Speed'}}</span
       >
 
@@ -16,39 +16,9 @@
     </label>
 
     <label>
-      @let playerHeightControl= optionGroup.controls.playerHeight;
-
-      <span
-        >{{playerHeightControl.errors | fromControlError : 'Player Heigh'}}
-      </span>
-
-      <input
-        [class.has-error]="playerHeightControl.errors !== null"
-        [formControl]="playerHeightControl"
-        class="input"
-        type="number"
-      />
-    </label>
-
-    <label>
-      @let playerWidthControl= optionGroup.controls.playerWidth;
-
-      <span>
-        {{playerWidthControl.errors | fromControlError: 'Player Width'}}</span
-      >
-
-      <input
-        [class.has-error]="playerWidthControl.errors !== null"
-        [formControl]="playerWidthControl"
-        class="input"
-        type="number"
-      />
-    </label>
-
-    <label>
       @let fallingSpeedControl= optionGroup.controls.fallenItemSpeed;
 
-      <span>
+      <span [class.has-error]="fallingSpeedControl.errors !== null">
         {{fallingSpeedControl.errors | fromControlError : 'Falling Speed'}}
       </span>
 
@@ -61,41 +31,11 @@
     </label>
 
     <label>
-      @let fallingHeightControl= optionGroup.controls.fallenItemHeight;
+      @let fallingTickControl= optionGroup.controls.fallingFrequency;
 
-      <span
-        >{{fallingHeightControl.errors | fromControlError : 'Falling Height'}}
+      <span [class.has-error]="fallingTickControl.errors !== null"
+        >{{fallingTickControl.errors | fromControlError : 'Falling Frequency'}}
       </span>
-
-      <input
-        [class.has-error]="fallingHeightControl.errors !== null"
-        [formControl]="fallingHeightControl"
-        class="input"
-        type="number"
-      />
-    </label>
-
-    <label>
-      @let fallingWidthControl= optionGroup.controls.fallenItemWidth;
-
-      <span>
-        {{fallingWidthControl.errors | fromControlError : 'Falling Width'}}
-      </span>
-
-      <input
-        [class.has-error]="fallingWidthControl.errors !== null"
-        [formControl]="fallingWidthControl"
-        class="input"
-        type="number"
-      />
-    </label>
-
-    <label>
-      @let fallingTickControl= optionGroup.controls.fallingItemTick;
-
-      <span
-        >{{fallingTickControl.errors | fromControlError : 'Falling Tick'}}</span
-      >
 
       <input
         [class.has-error]="fallingTickControl.errors !== null"
@@ -104,9 +44,20 @@
         type="number"
       />
     </label>
-  </div>
 
-  <div class="action">
-    <button [disabled]="!optionGroup.valid" type="submit">APPLY</button>
+    <label>
+      @let timeRemainingControl= optionGroup.controls.gameTime;
+
+      <span [class.has-error]="timeRemainingControl.errors !== null"
+        >{{timeRemainingControl.errors | fromControlError : 'Game Time'}}
+      </span>
+
+      <input
+        [class.has-error]="timeRemainingControl.errors !== null"
+        [formControl]="timeRemainingControl"
+        class="input"
+        type="number"
+      />
+    </label>
   </div>
 </form>
