@@ -35,6 +35,8 @@ The game is built using **Angular 20** and the **HTML Canvas API**, providing sm
 
 ### ✅ Step 2: Open the Terminal in the Project Folder
 
+In the terminal, type:
+
 ```bash
 cd path/to/project/folder
 ```
